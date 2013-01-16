@@ -1,6 +1,5 @@
 package AnyEvent::DateTime::Cron;
 
-
 use warnings;
 use strict;
 use DateTime();
@@ -11,12 +10,21 @@ our $VERSION = 0.03;
 #===================================
 sub new {
 #===================================
-    my $class = shift;
+    my ( $class, %params ) = @_;
+
+    foreach my $key ( keys %params ) {
+    	die "Unknown param '$key'" unless $key eq 'time_zone';
+    }
+
+    $params{time_zone} = DateTime::TimeZone->new(name => $params{time_zone})
+        if $params{time_zone};
+
     return bless {
-        _jobs    => {},
-        _debug   => 0,
-        _id      => 0,
-        _running => 0,
+        _jobs      => {},
+        _debug     => 0,
+        _id        => 0,
+        _running   => 0,
+        _time_zone => $params{time_zone},
     }, $class;
 }
 
@@ -35,7 +43,7 @@ sub add {
                 last;
             }
             die "Unknown param '$key'"
-                unless $key =~ /^(name|single|time_zone)$/;
+                unless $key =~ /^(name|single)$/;
             $params{$key} = shift @args;
         }
         die "No callback found for cron entry '$cron'"
@@ -118,17 +126,17 @@ sub _schedule {
 #===================================
     my $self = shift;
 
+    my $time_zone = $self->{_time_zone};
+
     AnyEvent->now_update();
     my $now_epoch = AnyEvent->now;
     my $now       = DateTime->from_epoch( epoch => $now_epoch );
     my $debug     = $self->{_debug};
 
+    $now->set_time_zone($time_zone) if $time_zone;
+
     for my $job (@_) {
         my $name       = $job->{name};
-		my $time_zone  = $job->{time_zone};
-
-        $now->set_time_zone($time_zone) if $time_zone;
-
         my $next_run   = $job->{event}->next($now);
 
         $next_run->set_time_zone($time_zone) if $time_zone;
@@ -208,6 +216,14 @@ __END__
     $cv = $cron->start;
     $cv->recv;
 
+    AnyEvent::DateTime::Cron->new(time_zone => 'local');
+        ->add(
+            '* * * * *'   => sub { warn "Every minute"},
+            '*/2 * * * *' => sub { warn "Every second minute"},
+          )
+        ->start
+        ->recv
+
 =head1 DESCRIPTION
 
 L<AnyEvent::DateTime::Cron> is an L<AnyEvent> based crontab, which supports
@@ -220,9 +236,13 @@ any running cron jobs to finish before exiting.
 
 =head2 new()
 
-    $cron = AnyEvent::DateTime::Cron->new();
+    $cron = AnyEvent::DateTime::Cron->new(
+        time_zone => ...
+    );
 
-Creates a new L<AnyEvent::DateTime::Cron> instance - takes no parameters.
+Creates a new L<AnyEvent::DateTime::Cron> instance - takes an optional
+time_zone parameter that will be used to set the time_zone for any DateTime
+objects that are used internally.
 
 =head2 add()
 
@@ -240,8 +260,6 @@ C<ID> is used instead.
 
 The C<single> parameter, if C<true>, will only allow a single instance of
 a job to run at any one time.
-
-The C<time_zone> parameter will set the time_zone for any DateTime objects used.
 
 New jobs can be added before running, or while running.
 
