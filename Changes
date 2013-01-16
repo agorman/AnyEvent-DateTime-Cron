@@ -1,5 +1,12 @@
 Revision history for AnyEvent-DateTime-Cron
 
+0.04    2013-01-15
+        BUG FIX:
+         - Fixing bug with new time_zone code
+
+        ENHANCEMENT:
+         - Making time_zone a constructor argument
+
 0.03    2013-01-12
         ENHANCEMENT:
          - added support for timezones, thanks to AGORMAN for

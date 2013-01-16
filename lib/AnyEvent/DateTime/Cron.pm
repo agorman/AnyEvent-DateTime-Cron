@@ -5,7 +5,7 @@ use strict;
 use DateTime();
 use DateTime::Event::Cron();
 use AnyEvent();
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 #===================================
 sub new {
