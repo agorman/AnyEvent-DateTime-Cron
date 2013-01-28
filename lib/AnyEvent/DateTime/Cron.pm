@@ -6,7 +6,7 @@ use DateTime();
 use DateTime::Event::Cron();
 use DateTime::Event::Cron::Quartz();
 use AnyEvent();
-our $VERSION = 0.04;
+our $VERSION = 0.05;
 
 #===================================
 sub new {

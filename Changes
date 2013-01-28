@@ -1,5 +1,10 @@
 Revision history for AnyEvent-DateTime-Cron
 
+0.05    2013-01-28
+        ENHANCEMENT:
+         - Adding the ability to change the backend to the
+           Quartz cron format
+
 0.04    2013-01-15
         BUG FIX:
          - Fixing bug with new time_zone code
