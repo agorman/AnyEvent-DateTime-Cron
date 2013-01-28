@@ -4,6 +4,7 @@ use warnings;
 use strict;
 use DateTime();
 use DateTime::Event::Cron();
+use DateTime::Event::Cron::Quartz();
 use AnyEvent();
 our $VERSION = 0.04;
 
@@ -13,11 +14,13 @@ sub new {
     my ( $class, %params ) = @_;
 
     foreach my $key ( keys %params ) {
-    	die "Unknown param '$key'" unless $key eq 'time_zone';
+    	die "Unknown param '$key'" unless $key =~ /^(time_zone|quartz)$/;
     }
 
     $params{time_zone} = DateTime::TimeZone->new(name => $params{time_zone})
         if $params{time_zone};
+
+    $params{quartz} //= 0;
 
     return bless {
         _jobs      => {},
@@ -25,6 +28,7 @@ sub new {
         _id        => 0,
         _running   => 0,
         _time_zone => $params{time_zone},
+        _quartz    => $params{quartz},
     }, $class;
 }
 
@@ -49,7 +53,14 @@ sub add {
         die "No callback found for cron entry '$cron'"
             unless $cb;
 
-        my $event = DateTime::Event::Cron->new($cron);
+        my $event;
+        if ($self->{_quartz}) {
+            $event = DateTime::Event::Cron::Quartz->new($cron);
+        }
+        else {
+            $event = DateTime::Event::Cron->new($cron);
+        }
+
         my $id    = ++$self->{_id};
         $params{name} ||= $id;
         my $job = $self->{_jobs}{$id} = {
@@ -137,7 +148,14 @@ sub _schedule {
 
     for my $job (@_) {
         my $name       = $job->{name};
-        my $next_run   = $job->{event}->next($now);
+
+        my $next_run;
+        if ($self->{_quartz}) {
+            $next_run = $job->{event}->get_next_valid_time_after($now);
+        }
+        else {
+            $next_run = $job->{event}->next($now);
+        }
 
         $next_run->set_time_zone($time_zone) if $time_zone;
 
@@ -238,11 +256,19 @@ any running cron jobs to finish before exiting.
 
     $cron = AnyEvent::DateTime::Cron->new(
         time_zone => ...
+        quartz    => 0/1
     );
 
-Creates a new L<AnyEvent::DateTime::Cron> instance - takes an optional
-time_zone parameter that will be used to set the time_zone for any DateTime
-objects that are used internally.
+Creates a new L<AnyEvent::DateTime::Cron> instance - takes optional parameters
+time_zone and quartz.
+
+time_zone can will be used to set the time_zone for any DateTime objects that
+are used internally.
+
+if quartz is set to a true value then this class will use switch to using
+L<DateTime::Event::Cron::Quartz> internally, which will allow the use of seconds
+in the cron expression. See the DateTime::Event::Cron::Quartz for details on
+writing a proper quartz cron expression.
 
 =head2 add()
 
