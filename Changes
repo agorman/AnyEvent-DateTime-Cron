@@ -1,5 +1,10 @@
 Revision history for AnyEvent-DateTime-Cron
 
+0.06    2013-04-01
+	BUG FIX:
+	 - Removing use of //= so this works with Perl
+           versions less than 5.10
+
 0.05    2013-01-28
         ENHANCEMENT:
          - Adding the ability to change the backend to the
