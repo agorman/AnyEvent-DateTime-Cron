@@ -20,7 +20,7 @@ sub new {
     $params{time_zone} = DateTime::TimeZone->new(name => $params{time_zone})
         if $params{time_zone};
 
-    $params{quartz} //= 0;
+    $params{quartz} = 0 unless defined $params{quartz};
 
     return bless {
         _jobs      => {},
