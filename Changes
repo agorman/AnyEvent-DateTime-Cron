@@ -1,5 +1,10 @@
 Revision history for AnyEvent-DateTime-Cron
 
+0.07
+	2013-11-08
+	OTHER:
+         - Changing bug tracker to agorman's forked repo on github
+
 0.06    2013-04-01
 	BUG FIX:
 	 - Removing use of //= so this works with Perl
